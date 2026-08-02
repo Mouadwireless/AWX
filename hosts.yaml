@@ -1,0 +1,53 @@
+all:
+  children:
+    Site1:
+      hosts:
+        Site1-CAT8K-CORE-001:
+          ansible_host: 192.168.220.136
+          device_model: Cisco
+          ios: IOS-XE
+          device_role: CORE
+          ansible_connection: network_cli
+          ansible_network_os: cisco.ios.ios
+        Site1-SW_ACCESS-001:
+          ansible_host: 192.168.220.171
+          device_model: Cisco
+          ios: Cisco IOL
+          device_role: Access
+          ansible_connection: network_cli
+          ansible_network_os: cisco.ios.ios
+          
+
+    Site2:
+      hosts:
+        Site2-OSCX-CORE-001:
+          ansible_host: 192.168.220.180
+          device_model: Aruba
+          ios: AOS-CX
+          device_role: CORE
+          ansible_connection: ansible.netcommon.network_cli
+          ansible_network_os: arubanetworks.aoscx.aoscx
+        Site2-SW-ACCESS-001:
+          ansible_host: 192.168.220.172
+          device_model: Cisco
+          ios: Cisco IOL
+          device_role: Access
+          ansible_connection: network_cli
+          ansible_network_os: cisco.ios.ios
+
+    Site3:
+      hosts:
+        Site3-CSR-CORE-001:
+          ansible_host: 192.168.220.133
+          device_model: Cisco
+          ios: IOS-XE
+          device_role: CORE
+          ansible_connection: network_cli
+          ansible_network_os: cisco.ios.ios
+        Site3-SW-ACCESS-001:
+          ansible_host: 192.168.220.173
+          device_model: Cisco
+          ios: Cisco IOL
+          device_role: Access
+          ansible_connection: network_cli
+          ansible_network_os: cisco.ios.ios
