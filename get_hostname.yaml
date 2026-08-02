@@ -1,34 +1,53 @@
 ---
-- name: Network Device Hostname Fetcher
+- name: Unified Network Device Hostname Fetcher (Cisco & Aruba)
   hosts: all
   gather_facts: false
   vars:
-    # Default fallback values if not provided via AWX Extra Vars
     site: "default_site"
     device_role: "default_role"
 
   tasks:
-    - name: Validate required input variables from AWX
+    - name: Validate required AWX input variables
       ansible.builtin.assert:
         that:
           - site is defined and site != ""
           - device_role is defined and device_role != ""
-        fail_msg: "Please specify both 'site' and 'device_role' when launching the job."
-        success_msg: "Running task for Site: '{{ site }}' | Role: '{{ device_role }}'"
+        fail_msg: "Please supply both 'site' and 'device_role' when launching the job."
 
-    - name: Execute 'show run | inc hostname' command
+    # -------------------------------------------------------------
+    # TASK 1: Run OS-specific CLI command
+    # -------------------------------------------------------------
+    - name: Execute hostname command on Cisco devices
       ansible.netcommon.cli_command:
         command: show run | inc hostname
       register: cli_output
+      when: ansible_network_os is match('.*cisco.*') or ansible_network_os == 'ios'
+
+    - name: Execute hostname command on Aruba AOS-CX devices
+      ansible.netcommon.cli_command:
+        command: show running-config | include hostname
+      register: cli_output_aruba
+      when: ansible_network_os == 'arubanetworks.aoscx.aoscx'
+
+    # -------------------------------------------------------------
+    # TASK 2: Combine output and parse hostname
+    # -------------------------------------------------------------
+    - name: Consolidate CLI output
+      ansible.builtin.set_fact:
+        raw_cli_result: "{{ cli_output.stdout if cli_output.skipped is not defined else cli_output_aruba.stdout }}"
 
     - name: Parse hostname from command output
       ansible.builtin.set_fact:
-        extracted_hostname: "{{ cli_output.stdout | regex_findall('^hostname\\s+(.+)$', multiline=True) | first | default('Unknown') }}"
+        extracted_hostname: "{{ raw_cli_result | regex_findall('^hostname\\s+(.+)$', multiline=True) | first | default('Unknown') }}"
 
-    - name: Display host details and retrieved hostname
+    # -------------------------------------------------------------
+    # TASK 3: Print summary
+    # -------------------------------------------------------------
+    - name: Display host details
       ansible.builtin.debug:
         msg:
-          - "Target Host IP/Address: {{ inventory_hostname }}"
+          - "Target Host IP: {{ inventory_hostname }}"
+          - "Detected Network OS: {{ ansible_network_os }}"
           - "Site: {{ site }}"
           - "Device Role: {{ device_role }}"
           - "Extracted Hostname: {{ extracted_hostname }}"
