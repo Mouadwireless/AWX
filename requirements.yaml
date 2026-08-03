@@ -1,5 +1,0 @@
----
-collections:
-  - name: ansible.netcommon
-  - name: cisco.ios
-  - name: arubanetworks.aoscx
